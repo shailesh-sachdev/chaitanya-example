@@ -1,0 +1,1100 @@
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<title>Practice Test</title>
+<script language="JavaScript" type="text/javascript" src="./includes/tinybox.js"></script>
+<script language="javascript" type="text/javascript" src="./includes/browser.js"></script>
+<script>
+var secs;
+var timerID = null;
+var timerRunning = false;
+var delay = 1000;
+var timecheck = 600;
+var formname;
+var formaction;
+
+function InitializeTimer(c, b, a) {
+    secs = c;
+    StopTheClock();
+    formname = b;
+    formaction = a;
+    timerID = setInterval("displayTimer()", 1000);
+}
+function StopTheClock() {
+    if (timerRunning) {
+        clearInterval(timerID);
+    }
+    timerRunning = false;
+}
+
+function displayTimer() {
+    if (secs == 300) {
+		fireMyPopup();
+    }
+    if (secs <= 0) {
+        StopTheClock();
+        eval("document." + formname + ".time_left.value = 0");
+        if (formname == "sample_form") {
+            preview_submit(1);
+        } else {
+            eval("document." + formname + ".action='" + formaction + "'");
+            eval("document." + formname + ".submit()");
+        }
+    } else {
+        var min = Math.floor(secs / 60);
+        var remaining_secs = secs % 60;
+        var texthr = Math.floor(min / 60);
+        var textmin = new String(min % 60);
+        if (textmin.length == 1) {
+            textmin = "0" + textmin;
+        }
+        var textsec = new String(remaining_secs);
+        if (textsec.length == 1) {
+            textsec = "0" + textsec;
+        }
+        self.status = "TIME LEFT : " + texthr + " Hr(s) " + textmin + " Min(s) " + remaining_secs + " Secs ";
+        eval("self.document.getElementById('timeleft').innerHTML ='" + texthr + ":" + textmin + ":" + textsec + " hrs'");
+        eval("self.document." + formname + ".time_left.value = " + secs);
+        var temp = secs;
+        secs = secs - 1;
+        timerRunning = true;
+    }
+};
+
+var bottom = 0;
+var padding = 5;
+var X = 5;
+var Y = 0;
+
+function dropMyPopup() {
+  Y++;
+  if( Y > bottom ) return;
+  document.getElementById("styled_popup").style.top = Y + "px";
+  setTimeout("dropMyPopup()", 25);
+}
+
+function fireMyPopup() {
+  var scrolledY;
+  if( self.pageYOffset ) {
+    scrolledY = self.pageYOffset;
+  } else if( document.documentElement && document.documentElement.scrollTop ) {
+    scrolledY = document.documentElement.scrollTop;
+  } else if( document.body ) {
+    scrolledY = document.body.scrollTop;
+  }
+
+  var centerY;
+  if( self.innerHeight ) {
+    centerY = self.innerHeight;
+  } else if( document.documentElement && document.documentElement.clientHeight ) {
+    centerY = document.documentElement.clientHeight;
+  } else if( document.body ) {
+    centerY = document.body.clientHeight;
+  }
+
+  // Don't forget to subtract popup's height! ( 300 in our case )
+  bottom = scrolledY + centerY - padding - 110;
+  Y = scrolledY;
+
+  document.getElementById("styled_popup").style.right = X + "px";
+  document.getElementById("styled_popup").style.display = "block";
+  dropMyPopup();
+  setTimeout("styledPopupClose()",60000)
+}
+
+function styledPopupClose() {
+  document.getElementById("styled_popup").style.display = "none";
+  Y = bottom; // if it was closed, make sure extra computations are done in dropMyPopup()
+}
+
+var UNANSWERCOUNT=0;
+var ANSWERCHECKED=0;
+var TAGGEDCOUNT = 0;
+var ANSWERTAGGEDCOUNT = 0;
+/* QUESTION / ANSWER AMNIPULATION FUNCTIONS */
+/* ANSWER  OPTION SELECTION ONLCLICK FUNCTION */
+function markAnswer() {
+		for (var i = 0; i < parseInt(document.getElementById("question_count").value); i++) {
+	        var qid = arrQuestionid[i];
+			if (arrprevanswers[qid] != 0 && arrprevanswers[qid]!= null) {
+            	var ele = "answer" + qid;
+            	for (var j = 0; j < eval("document.sample_form." + ele + ".length"); j++) {
+                	if (eval("document.sample_form." + ele + "[" + j + "].value") == arrprevanswers[qid]) {
+                   	 eval("document.sample_form." + ele + "[" + j + "].checked=true");
+                	}
+            	}
+        	}
+    	}
+}
+
+function changeChecked(q_id, q_row_no, q_val) {
+    var ans = 0;
+    alen = eval("document.sample_form.answer" + q_id + ".length");
+    for (pos = 0; pos < alen; pos++) {
+        answervar = eval("document.sample_form.answer" + q_id + "[" + pos + "]");
+        if (answervar.checked == true) {
+            ans = answervar.value;
+        }
+    }
+    if (ans != "") {
+        document.sample_form.answer_ques.value = ans;
+		ANSWERCHECKED=1;
+    }
+	document.sample_form.last_clicked_question.value = q_row_no;
+}
+
+function eraseAnswer() {
+	var q_id = arrQuestionid[document.getElementById("qindex").value];
+	var pos;
+	var answervar;
+	var len = eval("document.sample_form.answer" + q_id + ".length");
+	var chk = 0;
+	var chke = 0;
+	for (pos = 0; pos < len; pos++) {
+        answervar = eval("document.sample_form.answer" + q_id + "[" + pos + "]");
+       	if (answervar.checked) {
+           	chke = 1;
+       	}
+       	answervar.checked = false;
+    }
+    if (chke == 0) {
+       	return;
+    }
+	setAnswer(q_id,0);
+	document.sample_form.answer_ques.value = 0;
+	document.sample_form.last_clicked_question.value = document.getElementById("qindex").value;
+	ANSWERCHECKED=1;
+}
+function prev() {
+	var h = document.getElementById("qindex");
+    if(h.value <= 0) {
+      v = parseInt(h.value) - 1
+      swap_sheet(v);
+    } else if (h.value == 1) {
+        h.value = parseInt(h.value) - 1;
+        swap_sheet(h.value);
+    } else {
+        h.value = parseInt(h.value) - 1;
+        swap_sheet(h.value);
+        return false;
+    }
+}
+function next() {
+	var l = parseInt(document.getElementById("question_count").value) - 2;
+    var j = document.getElementById("qindex");
+    if(j.value  > l) {
+      v = parseInt(j.value) + 1;
+      swap_sheet(v);
+    }else if (j.value == l) {
+        j.value = parseInt(j.value) + 1;
+        swap_sheet(j.value);
+    } else {
+        j.value = parseInt(j.value) + 1;
+        swap_sheet(j.value);
+        return false;
+    }
+}
+function preview() {
+	var space1='';
+	var space2='';
+
+	rowcount =getRowCount(1);
+	var t = document.getElementById("ques_ID");
+    var B = document.getElementById("answer_ques");
+    var w = document.getElementById("question_paper_no");
+    var y = document.getElementById("question_count").value
+
+	var v = 0;
+    var D = "</span></a>";
+    var H = "";
+    var z = "";
+    var G = 1;
+    U = 0;
+    var E = 0;
+    UNcount = 0;
+    tcount = 0;
+	atcount = 0;
+
+	for (var C = 0; C < parseInt(document.getElementById("question_count").value); C++) {
+        var m = parseInt(C + 1);
+        var qid = arrQuestionid[C];
+        var I = "Q" + utildisp(parseInt(C) + 1);
+        var J = '<a id="q_disp'+m+'" title="Click to view '+ I+'" class="attempt" href=javascript:swap_sheet(' + C + ") onClick=javascript:swap_sheet(" + C + ")><span>";
+        var A = '<a id="q_disp'+m+'" title="Click to view '+ I+'" class="unattempt" href=javascript:swap_sheet(' + C + ") onClick=javascript:swap_sheet(" + C + ")><span>";
+        var yt = '<a id="q_disp'+m+'" title="Click to view '+ I+'" class="qnodisp_tag" href=javascript:swap_sheet(' + C + ") onClick=javascript:swap_sheet(" + C + ")><span>";
+		var at = '<a id="q_disp'+m+'" title="Click to view '+ I+'" class="qno_ans_tag" href=javascript:swap_sheet(' + C + ") onClick=javascript:swap_sheet(" + C + ")><span>";
+
+        var marked_string = document.getElementById("marked_string").value;
+
+        var mstring = marked_string.split(",") ;
+
+        if(inArray(mstring,qid) == 1 && arrprevanswers[qid] == 0)
+        {
+            z += yt + I + D ;
+            tcount++;
+            U++;
+
+        } else if(inArray(mstring,qid) == 1 && arrprevanswers[qid] != 0)
+        {
+            z += at + I + D ;
+            atcount++;
+            U++;
+
+        }else if (arrprevanswers[qid] == 0) {
+	    z += A + I + D;
+	    UNcount++;
+	    U++;
+        } else {
+	    z += J + I + D;
+	    E++;
+	    U++;
+        }
+		if(U == rowcount){
+			U=0;
+		}
+	}
+    document.getElementById("qnodetails").innerHTML = z;
+    document.getElementById("no_attempt").innerHTML = E;
+    document.getElementById("no_unattempt").innerHTML = UNcount;
+    document.getElementById("no_tagged").innerHTML = tcount;
+	document.getElementById("no_ans_tagged").innerHTML = atcount;
+    UNANSWERCOUNT= UNcount;
+    TAGGEDCOUNT = tcount;
+	ANSWERTAGGEDCOUNT = atcount;
+}
+
+function preview_submit(g) {
+  checkprevanswers();
+  preview();
+//  var timeleft = document.getElementById("timeleft").value;
+  var timeleft = document.getElementById("timeleft").innerHTML;
+
+  if(UNANSWERCOUNT > 0 || TAGGEDCOUNT > 0 || ANSWERTAGGEDCOUNT > 0) {
+	var unmsg="<h1>You have <span>"+timeleft+"</span> to answer <span>"+UNANSWERCOUNT+"</span>  un-answered question(s), <span>"+ TAGGEDCOUNT  +"</span> tagged question(s), <span>"+ ANSWERTAGGEDCOUNT  +"</span> tagged & attempted question(s).</h1><h2>still do you want to proceed with your submit?</h2>";
+  }
+  else
+	var unmsg='Do you want to proceed with your submit?';
+
+   if (g == 0) {
+ 		alertbox(2,unmsg,alertbox_callback);
+    } else {
+        if (g == 1) {
+            document.getElementById("auto_submit").value = "Y";
+        }
+
+		var s = document.getElementById("serdatetime").value;
+		var c = document.getElementById("canddatetime").value;
+		var etime = document.getElementById("aETime").value;
+		var cdate = c.split(',');
+		var sdate = s.split(',');
+		var cd = new Date(cdate[0], cdate[1], cdate[2], cdate[3], cdate[4], cdate[5]);
+		var sd = new Date(sdate[0], sdate[1], sdate[2], sdate[3], sdate[4], sdate[5]);
+		var millisec= sd - cd ;
+		var seconds = Math.round(millisec/1000);
+
+		if(seconds >= 0){
+			document.sample_form.action = "online_exam_ver.php";
+		}else{
+			document.sample_form.action = "sample_scores.php";
+		}
+
+	/*if(document.getElementById("exam_view").value == "V"){
+	    document.sample_form.action = "online_exam_ver.php";
+	}else{
+	    document.sample_form.action = "online_exam.php";
+	} */
+
+	    document.sample_form.submit();
+    }
+}
+var preview_submit_callback=function(bool){
+	TINY.box.hide();
+	if(bool){
+		document.getElementById("auto_submit").value = "N";
+		return true;
+	}else{
+		return false;
+	}
+};
+
+/* UTILITY FUNCTIONS */
+function setAnswer(qid,answer)
+{
+	if(qid!='')
+	{
+		if(answer=='')
+			answer=0;
+		arrprevanswers[qid]=answer;
+	}
+}
+function getAnswer(qid)
+{
+	if(qid!='')
+	{
+		return arrprevanswers[qid];
+	}
+}
+
+function checkprevanswers()
+{
+	var q_id=document.getElementById("ques_ID").value;
+	var ans= document.sample_form.answer_ques.value;
+
+	if(ans == "")
+   	   ans=0;
+    if(ANSWERCHECKED==1)
+	{
+		if(arrprevanswers[q_id] == ans)
+		{
+			//old and current choosed option same no need to raise ajax request
+			document.sample_form.answer_ques.value='';
+		}else
+		{
+			arrprevanswers[q_id] = ans;
+		}
+		ANSWERCHECKED=0;
+	}
+}
+
+function showdiv(b) {
+    document.getElementById(b).style.visibility = "visible";
+    document.getElementById(b).style.display = "block";
+}
+function hidediv(b) {
+    document.getElementById(b).style.visibility = "hidden";
+    document.getElementById(b).style.display = "none";
+}
+function preview_close() {
+    hidediv("preview_div");
+    showdiv("questionpaper_div");
+}
+function utildisp(b) {
+    switch (b) {
+    case 1:
+        return "01";
+        break;
+    case 2:
+        return "02";
+        break;
+    case 3:
+        return "03";
+        break;
+    case 4:
+        return "04";
+        break;
+    case 5:
+        return "05";
+        break;
+    case 6:
+        return "06";
+        break;
+    case 7:
+        return "07";
+        break;
+    case 8:
+        return "08";
+        break;
+    case 9:
+        return "09";
+        break;
+    default:
+        return b;
+        break;
+    }
+}
+
+function swap_sheet(g) {
+	checkprevanswers();
+	var f = document.getElementById("question_count").value;
+    if(g == f){
+       alertbox(1, "<h1>You are in last question,please use previous question button or preview panel to view other questions</h1>");
+       return
+    }
+    if(g<0){
+      alertbox(1, "<h1>You are in first question,please use next question button or preview panel to view other questions</h1>");
+      return
+    }
+    document.getElementById("qindex").value = g;
+    for (i = 0; i < f; i++) {
+        var d = document.getElementById("q" + i);
+        d.style.display = "none";
+    }
+    var d = document.getElementById("q" + g);
+    d.style.display = "block";
+    document.getElementById("ques_ID").value = arrQuestionid[g];
+    document.getElementById("answer_ques").value = "";
+
+    var marked_string = document.getElementById("marked_string").value;
+    var mstring = marked_string.split(",") ;
+    var button_ctl = document.getElementById("mark_btn");
+    if(inArray(mstring,arrQuestionid[g]) == 1) {
+        button_ctl.value = "De-Tag" ;
+        button_ctl.title = " Click to unmark the reviewed question " ;
+    }else {
+        button_ctl.value = "Tag" ;
+        button_ctl.title = " Click to review the question " ;
+    }
+
+    if (g == (f - 1)) {
+        document.getElementById("Next").style.color="#7B7B7B";
+        document.getElementById("Prev").style.color="#FFFFFF";
+    } else {
+        if (g == 0) {
+            document.getElementById("Prev").style.color="#7B7B7B";
+            document.getElementById("Next").style.color="#FFFFFF";
+        } else {
+            document.getElementById("Prev").style.color="#FFFFFF";
+            document.getElementById("Next").style.color="#FFFFFF";
+        }
+    }
+	/*if(getAnswer(arrQuestionid[g])!=0)
+	  document.getElementById("EraseAnswer").disabled = false;
+	else
+	  document.getElementById("EraseAnswer").disabled = true;
+	 */
+	preview();
+ 	showdiv("preview_div");
+	showdiv("questionpaper_div");
+}
+
+function Preload() {
+    var a = Preload.arguments;
+    document.imageArray = new Array(a.length);
+    for (var b = 0; b < a.length; b++) {
+        document.imageArray[b] = new Image;
+        document.imageArray[b].src = a[b]
+    }
+}
+
+/*Alert Content alert(type =1=1),confirm (type=2) */
+var alertbox_callback=function(obj){
+	if(obj.id == 'alertboxok'){
+		 document.getElementById("auto_submit").value = "N";
+		 TINY.box.hide();
+		 document.sample_form.action = "sample_scores.php";
+		 document.sample_form.submit();
+		 return true;
+	}else{
+		TINY.box.hide();
+		return false;
+	}
+}
+/*Alert Content alert(type =1=1),confirm (type=2) */
+function alertbox(type,msg,alertbox_callback)
+{
+	if(type == 1)
+	{
+		var content='<div class="content_container_confi_wrapper"><div class="outerbox">'+
+		'<div class="innerbox">'+
+		'<div class="innerbox_container_confi_login">'+
+		'<div class="pager_header_common">Confirmation</div>'+
+		'<div class="content_container_confi_login">'+
+		'<div id="confo_div">'+msg+
+		'</div>'+
+		'</div>'+
+		'<div class="button_container_common"><input name="button" type="button" class="green_button" onclick="TINY.box.hide()" value="OK"/>'+
+		'</div>'+
+		'</div>'+
+		'</div>'+
+		'</div></div>';
+	}else if(type == 2){
+		var content='<div class="content_container_confi_wrapper"><div class="outerbox">'+
+                '<div class="innerbox">'+
+                '<div class="innerbox_container_confi_login">'+
+                '<div class="pager_header_common">Confirmation</div>'+
+                '<div class="content_container_confi_login">'+
+                '<div id="confo_div">'+msg+
+                '</div>'+
+                '</div>'+
+                '<div class="button_container_common"><input name="button" type="button" id="alertboxok"  class="green_button" onclick="alertbox_callback(this)" value="YES"/><input name="button" type="button" class="green_button" onclick="alertbox_callback(this)" value="NO"/>'+
+                '</div>'+
+                '</div>'+
+                '</div>'+
+                '</div></div>';
+	}
+	TINY.box.show(content,0,0,0,0,0);
+}
+
+function getRowCount(type)
+{
+	var qpcount=document.getElementById("question_count").value;
+	var subjsize=25;
+	var rowcount=5;
+	if(type==1)
+		return rowcount;
+//	else
+//	  document.getElementById('subname').size=subjsize;
+}
+function inArray(haystack, needle) {
+
+// alert(needle+', '+haystack) ; return false ;
+
+    var length = haystack.length;
+    for(var i = 0; i < length; i++) {
+        if(haystack[i] == needle) return 1;
+    }
+    return 0;
+}
+function tagQ(button_ctl)
+{
+	var c=arrQuestionid[document.getElementById("qindex").value];
+        c = parseInt(c);
+        marked_string = document.getElementById("marked_string").value;
+        if(button_ctl.value == "Tag")
+        {
+                if(marked_string != '')
+                        var marked_string = marked_string+','+c;
+                else
+                        var marked_string = c;
+
+                        document.getElementById("marked_string").value = marked_string;
+			tagByQuesId[c] = "De-Tag";
+                        button_ctl.value = "De-Tag" ;
+                        button_ctl.title = " Click to unmark the reviewed question " ;
+                        document.getElementById("q_disp"+c).className= "qnodisp_tag";
+        }
+        else if(button_ctl.value == "De-Tag")
+        {
+                var mstring = marked_string.split(",");
+
+                var splittedValue = new Array();
+
+                var j = 0 ;
+                for(var i=0;i<mstring.length;i++)
+                {
+                        if(mstring[i] != c)
+                        {
+                                splittedValue[j] = mstring[i];
+                                j++;
+                        }
+                }
+
+                var reqValue = splittedValue.toString();
+                document.getElementById("marked_string").value = reqValue;
+		tagByQuesId[c] = "Tag";
+                button_ctl.value = "Tag" ;
+                button_ctl.title = " Click to review the question " ;
+                if(arrprevanswers[c] == '')
+                        document.getElementById("q_disp"+c).className= "unattempt";
+                else
+                        document.getElementById("q_disp"+c).className= "attempt";
+        }
+}
+</script>
+<link href="themes/default/css/style.css" rel="stylesheet" type="text/css">
+<link href="themes/default/css/reset.css" rel="stylesheet" type="text/css">
+<style>
+.qnodisp_tag { Background-color:#FF8000;font-family="Verdana,Arial,Helvetica,sans-serif";font-weight:bold;font-size:10px;}
+</style><style type="text/css">
+<!--
+.style2 {
+	color: #FFFFFF;
+	font-weight: bold;
+}
+.style3 {color: #FFFFFF}
+.style4 {
+	font-size: 14px;
+	font-weight: bold;
+}
+.greybluetextquestion{font-size: 16px;line-height:150%;}
+.greybluetextans{font-size: 16px;line-height:150%;}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="chrome-extension://bblbgcheenepgnnajgfpiicnbbdmmooh/pesticide.min.css" id="pesticideCSS"><script type="text/javascript" src="chrome-extension://bblbgcheenepgnnajgfpiicnbbdmmooh/pesticide.js" id="pesticideJS"></script></head>
+<body onload="javascript:callOnLoad();" onkeydown="return doKeyDown(event);" ondragstart="return Stop(event)" onselectstart="return Stop(event)" onmousedown="return Stop(event)" onmouseup="return Stop(event)" class="nimbus-is-editor" data-gr-c-s-loaded="true">
+<div id="wrapper">
+  <div id="header_container">
+    <div id="header_container_inner">
+      <!-- <div id="header_sify_logo"><img src="themes/default/images/sify_logo.png" width="70" height="37" /></div> -->
+	  <div id="header_sify_logo">
+	  <table width="850px" border="0" cellspacing="0" cellpadding="0">
+	  <tbody><tr>
+		<td width="25%" align="left"></td>
+		<td width="50%" align="center"><img src="themes/default/images/sify_logo.png" width="250" height="45"></td>
+		<td width="25%"></td>
+	  </tr>
+	  </tbody></table>
+		</div>
+    </div>
+  </div>
+  <div class="clear"></div>
+  <div id="samp_quest_body_container">
+
+<form name="sample_form" id="sample_form" action="" method="post" autocomplete="off">
+	<input type="hidden" name="token" value="8b79dec36bed40b9cfda5063960d8dce">
+<input type="hidden" name="time_to_submit" value="600">
+<input type="hidden" id="memno" name="memno" value="TEST1">
+<input type="hidden" id="time_left" name="time_left" value="279">
+<input type="hidden" id="total_time_candi" name="total_time_candi" value="600">
+<input type="hidden" id="starttime" name="starttime" value="2020-06-02 11:01:02">
+<input type="hidden" id="h_totalTime" name="h_totalTime" value="600">
+<input type="hidden" id="h_startTime" name="h_startTime" value=" 11:01:02">
+<input type="hidden" id="ques_ID" name="ques_ID" value="1">
+<input type="hidden" id="answer_ques" name="answer_ques" value="4">
+<input type="hidden" id="last_clicked_question" name="last_clicked_question" value="0">
+<input type="hidden" id="auto_submit" name="auto_submit">
+<input type="hidden" name="marked_string" id="marked_string" value="">
+<input type="hidden" name="exam_view" id="exam_view" value="V">
+<input type="hidden" name="serdatetime" id="serdatetime" value="2020,6,2,11,6,24">
+<input type="hidden" name="canddatetime" id="canddatetime" value="2017,08,24,17,00,00">
+<input type="hidden" name="aETime" id="aETime" value="">
+
+
+    <!-- Top Container -->
+    <div id="top-container-wrapper">
+      <div id="top-container" class="container">
+        <div class="text_bold">SAMPLE SUBJECT (Please click on the Preview Submit Button to move to the Main Exam)</div>
+        <div class="sam_quest_ti_lt_container">
+        <div class="sam_quest_ti_lt_hrs" id="timeleft">0:04:39 hrs</div>
+          <div class="sam_quest_ti_lt_txt">Time Left</div>
+        </div>
+        <div class="sam_quest_pap_container">
+          <div class="sam_quest_left_container">
+            <div class="sam_quest_heading_bg">
+              <h1>Text Size</h1>
+              <div class="sam_quest_heading_ft_div">
+                <a href="#"><img style="cursor:hand" onclick="changeQPFontSize('0');" src="themes/default/images/A-.png" title="Decrease Font" width="26" height="26"></a>&nbsp;&nbsp;
+                <a href="#"><img style="cursor:hand" onclick="changeQPFontSize('1');" src="themes/default/images/A+.png" title="Increase Font" width="26" height="26"></a>
+              </div>
+            </div>
+            <div class="sam_quest_text_container" id="questionpaper_div" style="position: relative; visibility: visible; display: block;">
+<div class="bottom-container" id="q0" style="display: block;">
+<h1><b>Section : Sample Question Title</b></h1><input type="hidden" name="question_id[0]" value="1">
+<span id="mark">(Mark : <span>2.00)&nbsp;(Negative Mark/s - 0.50)</span></span><div class="sam_quest_text_inner_container" id="sam_quest_text_inner_container"><div style="width:95%;display:table;">
+				<table width="100%">
+					<tbody><tr>
+						<td width="5%" class="greybluetextquestion" valign="top" align="left"><b>Q1.&nbsp;</b></td>
+						<td width="95%" class="greybluetextquestion" align="left">In the following question, some part of the sentence may have errors. Find out which part of the sentence has an error and select the appropriate option. If a sentence is free from error, select 'No Error'.<br><br><b>Millions of Jews lost (A)/ their kith and kin (B)/ in Hitler concentration camps.(C)/ No error(D)</b>
+						</td>
+					</tr></tbody></table></div><div class="sam_ans_text_container" style="padding-left:25px;width:90%;"><div style="padding:0px;display:table;width:100%;"><table width="98%">
+<tbody><tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer1" name="answer1" value="1" onclick="javascript:changeChecked(1,0,0)"></td><td valign="top" width="5%">A)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(1,0,1)" dir="ltr">A</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer1" name="answer1" value="2" onclick="javascript:changeChecked(1,0,0)"></td><td valign="top" width="5%">B)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(1,0,2)" dir="ltr">B</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer1" name="answer1" value="3" onclick="javascript:changeChecked(1,0,0)"></td><td valign="top" width="5%">C)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(1,0,3)" dir="ltr">C</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer1" name="answer1" value="4" onclick="javascript:changeChecked(1,0,0)"></td><td valign="top" width="5%">D)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(1,0,4)" dir="ltr">D</label></td></tr><tr><td>&nbsp;</td></tr>
+</tbody></table>
+</div></div>
+</div>
+</div>
+<div class="bottom-container" id="q1" style="display: none;">
+<h1><b>Section : Sample Question Title</b></h1><input type="hidden" name="question_id[1]" value="2">
+<span id="mark">(Mark : <span>2.00)&nbsp;(Negative Mark/s - 0.50)</span></span><div class="sam_quest_text_inner_container" id="sam_quest_text_inner_container"><div style="width:95%;display:table;">
+				<table width="100%">
+					<tbody><tr>
+						<td width="5%" class="greybluetextquestion" valign="top" align="left"><b>Q2.&nbsp;</b></td>
+						<td width="95%" class="greybluetextquestion" align="left">A man travels in his car from city A to B at 40 km/hr and returns from B to A at 60 km/h. His average speed (in km/hr) during the whole journey is <br><br>एक व्यक्ति अपनी कार में शहर A से B तक 40 कि.मी./घंटा की रफ्तार से यात्रा करता है और B से A तक 60 कि.मी./घंटा की रफ्तार से लौटता है। सम्&zwj;पूर्ण यात्रा में उसकी औसत रफ्तार (कि.मी./घंटा में) क्या होगी?
+						</td>
+					</tr></tbody></table></div><div class="sam_ans_text_container" style="padding-left:25px;width:90%;"><div style="padding:0px;display:table;width:100%;"><table width="98%">
+<tbody><tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer2" name="answer2" value="1" onclick="javascript:changeChecked(2,1,0)"></td><td valign="top" width="5%">A)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(2,1,1)" dir="ltr">48</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer2" name="answer2" value="2" onclick="javascript:changeChecked(2,1,0)"></td><td valign="top" width="5%">B)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(2,1,2)" dir="ltr">50</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer2" name="answer2" value="3" onclick="javascript:changeChecked(2,1,0)"></td><td valign="top" width="5%">C)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(2,1,3)" dir="ltr">45</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer2" name="answer2" value="4" onclick="javascript:changeChecked(2,1,0)"></td><td valign="top" width="5%">D)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(2,1,4)" dir="ltr">60</label></td></tr><tr><td>&nbsp;</td></tr>
+</tbody></table>
+</div></div>
+</div>
+</div>
+<div class="bottom-container" id="q2" style="display: none;">
+<h1><b>Section : Sample Question Title</b></h1><input type="hidden" name="question_id[2]" value="3">
+<span id="mark">(Mark : <span>2.00)&nbsp;(Negative Mark/s - 0.50)</span></span><div class="sam_quest_text_inner_container" id="sam_quest_text_inner_container"><div style="width:95%;display:table;">
+				<table width="100%">
+					<tbody><tr>
+						<td width="5%" class="greybluetextquestion" valign="top" align="left"><b>Q3.&nbsp;</b></td>
+						<td width="95%" class="greybluetextquestion" align="left"><img src="images/Sample_3Q.jpg"><br><br>The ratio of average of expenses on food, clothing and miscellaneous items to the average of expenses on savings and rent is<br><br>भोजन, वस्&zwj;त्र और विविध मदों पर होने वाले खर्च के औसत का बचत और किराये पर होने वाले खर्च के औसत से अनुपात क्&zwj;या है?
+						</td>
+					</tr></tbody></table></div><div class="sam_ans_text_container" style="padding-left:25px;width:90%;"><div style="padding:0px;display:table;width:100%;"><table width="98%">
+<tbody><tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer3" name="answer3" value="1" onclick="javascript:changeChecked(3,2,0)"></td><td valign="top" width="5%">A)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(3,2,1)" dir="ltr">3 : 2</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer3" name="answer3" value="2" onclick="javascript:changeChecked(3,2,0)"></td><td valign="top" width="5%">B)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(3,2,2)" dir="ltr">1 : 3</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer3" name="answer3" value="3" onclick="javascript:changeChecked(3,2,0)"></td><td valign="top" width="5%">C)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(3,2,3)" dir="ltr">2 : 1</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer3" name="answer3" value="4" onclick="javascript:changeChecked(3,2,0)"></td><td valign="top" width="5%">D)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(3,2,4)" dir="ltr">1 : 1</label></td></tr><tr><td>&nbsp;</td></tr>
+</tbody></table>
+</div></div>
+</div>
+</div>
+<div class="bottom-container" id="q3" style="display: none;">
+<h1><b>Section : Sample Question Title</b></h1><input type="hidden" name="question_id[3]" value="4">
+<span id="mark">(Mark : <span>2.00)&nbsp;(Negative Mark/s - 0.50)</span></span><div class="sam_quest_text_inner_container" id="sam_quest_text_inner_container"><div style="width:95%;display:table;">
+				<table width="100%">
+					<tbody><tr>
+						<td width="5%" class="greybluetextquestion" valign="top" align="left"><b>Q4.&nbsp;</b></td>
+						<td width="95%" class="greybluetextquestion" align="left">A series is given with one term missing. Select the correct alternative from the given ones that will complete the series.<br><br><b>JAK, KBL, LCM, MDN, _____</b><br><br>एक अनुक्रम दिया गया है, जिसमें से एक पद लुप्त है| दिए गए विकल्पों में से वह सही विकल्प चुनिए जो अनुक्रम को पूरा करे|<br><br><b>JAK, KBL, LCM, MDN, _____</b>
+						</td>
+					</tr></tbody></table></div><div class="sam_ans_text_container" style="padding-left:25px;width:90%;"><div style="padding:0px;display:table;width:100%;"><table width="98%">
+<tbody><tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer4" name="answer4" value="1" onclick="javascript:changeChecked(4,3,0)"></td><td valign="top" width="5%">A)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(4,3,1)" dir="ltr">OEP</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer4" name="answer4" value="2" onclick="javascript:changeChecked(4,3,0)"></td><td valign="top" width="5%">B)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(4,3,2)" dir="ltr">NEO</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer4" name="answer4" value="3" onclick="javascript:changeChecked(4,3,0)"></td><td valign="top" width="5%">C)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(4,3,3)" dir="ltr">MEN</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer4" name="answer4" value="4" onclick="javascript:changeChecked(4,3,0)"></td><td valign="top" width="5%">D)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(4,3,4)" dir="ltr">NPF</label></td></tr><tr><td>&nbsp;</td></tr>
+</tbody></table>
+</div></div>
+</div>
+</div>
+<div class="bottom-container" id="q4" style="display: none;">
+<h1><b>Section : Sample Question Title</b></h1><input type="hidden" name="question_id[4]" value="5">
+<span id="mark">(Mark : <span>2.00)&nbsp;(Negative Mark/s - 0.50)</span></span><div class="sam_quest_text_inner_container" id="sam_quest_text_inner_container"><div style="width:95%;display:table;">
+				<table width="100%">
+					<tbody><tr>
+						<td width="5%" class="greybluetextquestion" valign="top" align="left"><b>Q5.&nbsp;</b></td>
+						<td width="95%" class="greybluetextquestion" align="left">The highest share in power generation in India is of<br><br>भारत में विद्युत-उत्पादन में सर्वाधिक अंशदान किसका है?
+						</td>
+					</tr></tbody></table></div><div class="sam_ans_text_container" style="padding-left:25px;width:90%;"><div style="padding:0px;display:table;width:100%;"><table width="98%">
+<tbody><tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer5" name="answer5" value="1" onclick="javascript:changeChecked(5,4,0)"></td><td valign="top" width="5%">A)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(5,4,1)" dir="ltr">Atomic power<br>परमाणविक शक्ति</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer5" name="answer5" value="2" onclick="javascript:changeChecked(5,4,0)"></td><td valign="top" width="5%">B)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(5,4,2)" dir="ltr">Hydro power<br>जल शक्ति</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer5" name="answer5" value="3" onclick="javascript:changeChecked(5,4,0)"></td><td valign="top" width="5%">C)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(5,4,3)" dir="ltr">Thermal power<br>ऊष्मा शक्ति</label></td></tr><tr><td>&nbsp;</td></tr>
+<tr class="greybluetextans"><td valign="top" width="5%" style="padding-top:2px;"><input type="radio" id="answer5" name="answer5" value="4" onclick="javascript:changeChecked(5,4,0)"></td><td valign="top" width="5%">D)&nbsp;</td><td width="90%" valign="top"><label onclick="javascript:changeChecked(5,4,4)" dir="ltr">wind power<br>वायु शक्ति</label></td></tr><tr><td>&nbsp;</td></tr>
+</tbody></table>
+</div></div>
+</div>
+</div>
+<input type="hidden" name="question_count" id="question_count" value="5"><script type="text/javascript">
+arrQuestionid = {
+'0' : 1, '1' : 2, '2' : 3, '3' : 4, '4' : 5}
+</script>
+<script type="text/javascript">
+arrprevanswers = {
+'1' : 0, '2' : 0, '3' : 0, '4' : 0, '5' : 0}
+</script>
+<script type="text/javascript">
+tagByQuesId = {
+'0' : 'Tag', '1' : 'Tag', '2' : 'Tag', '3' : 'Tag', '4' : 'Tag'}
+</script>
+            </div>
+          </div>
+          <div class="sam_quest_right_top_container">
+            <div class="sam_quest_photo"><img src="themes/default/images/photo_no.jpg" width="150" height="150"></div>
+            <div class="sam_quest_sig"><img src="themes/default/images/sign.jpg" width="150" height="44"></div>
+            <div class="sam_quest_ca_detail">
+              <div id="can-dt2">
+                <span class="can-lable2">Roll no. </span>
+                <span class="details2">TEST1</span>
+                <span class="can-lable2">Candidate Name</span>
+                <span class="details2">PRACTICE TEST</span>
+              </div>
+            </div>
+          </div>
+          <div class="sam_quest_right_bottom_container">
+            <div id="sam-que-att">
+              <h1 style="padding-top:12px;"><b>Number of Questions</b></h1>
+              <div id="preview_div" style="visibility: visible; display: block;">
+                <div id="que-scroll">
+                  <div id="qnodetails"><a id="q_disp1" title="Click to view Q01" class="unattempt" href="javascript:swap_sheet(0)" onclick="javascript:swap_sheet(0)"><span>Q01</span></a><a id="q_disp2" title="Click to view Q02" class="unattempt" href="javascript:swap_sheet(1)" onclick="javascript:swap_sheet(1)"><span>Q02</span></a><a id="q_disp3" title="Click to view Q03" class="unattempt" href="javascript:swap_sheet(2)" onclick="javascript:swap_sheet(2)"><span>Q03</span></a><a id="q_disp4" title="Click to view Q04" class="unattempt" href="javascript:swap_sheet(3)" onclick="javascript:swap_sheet(3)"><span>Q04</span></a><a id="q_disp5" title="Click to view Q05" class="unattempt" href="javascript:swap_sheet(4)" onclick="javascript:swap_sheet(4)"><span>Q05</span></a></div>
+                </div>
+              </div>
+              <div class="clear"></div>
+              <div class="attempt_container">
+              <div class="sam_attempt" id="no_attempt">0</div>
+              <div class="sam_attempt_txt">Attempted</div>
+              <div class="sam_tag " id="no_tagged">0</div>
+              <div class="sam_tag_text">Tagged</div>
+			  <div class="sam_ans_tag" id="no_ans_tagged">0</div>
+              <div class="sam_ans_tag_text">Attempted <br> &amp; Tagged</div>
+              <div class="sam_unattempt" id="no_unattempt">5</div>
+              <div class="sam_unattempt_text">Unattempted</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Link Container-->
+    <div class="clear"></div>
+    <div id="link-con" class="fixed-btm">
+      <div class="container">
+        <div id="pre_btn_div">
+          <div id="prev_arrow_div"><a href="javascript:void(0);" onclick="javascript:prev()"><img src="images/prev_arrow.png" width="12" height="16"></a></div>
+          <div id="prev_arrow_text"><a href="javascript:void(0);" onclick="javascript:prev()" title="Click to view previous question" id="Prev" style="color: rgb(123, 123, 123);">Previous Question</a></div>
+        </div>
+        <div id="next_btn_div">
+          <div id="next_arrow_text"><a title="Click to view next question" href="javascript:void(0);" onclick="javascript:next()" id="Next" style="color: rgb(255, 255, 255);">Next Question</a></div>
+          <div id="next_arrow_div"><a href="javascript:void(0);" onclick="javascript:next()"><img src="images/next_arrow.png" width="12" height="16"></a></div>
+        </div>
+
+        <div class="sam_quest_tag_btn_div" id="tagDiv"><input class="yellow_button" type="button" value="Tag" onclick="javascript: tagQ(this);" id="mark_btn" title=" Click to review the question "></div>
+        <div class="sam_quest_er_ans_btn_div" id="eraseDiv"><input class="red_button" type="button" value="Erase" title="Click to Erase the answer" onclick="eraseAnswer()"></div>
+        <div id="final_submit_btn_div">
+          <div id="final_submit_arrow_div"><a href="#" onclick="preview_submit(0)"><img src="images/final_submit_arow.png" width="16" height="13"></a></div>
+          <div id="final_submit_arrow_text"><a title="Click to submit Question Paper" href="#" onclick="preview_submit(0)">Preview Submit</a></div>
+    <input type="hidden" name="qindex" id="qindex" value="0">
+        </div>
+      </div>
+    </div>
+
+<!-- Timer Alert -->
+<div id="styled_popup" style="width: 350px; height: 78px; display: block; position: absolute; z-index: 100; top: 559px; left: -3px; right: 5px;" name="styled_popup">
+  <table width="100%" height="75" border="0" cellpadding="0" cellspacing="0" onclick="javascript:styledPopupClose()">
+    <tbody><tr>
+      <td><table width="100%" height="78" border="0" cellpadding="5" cellspacing="1" class="Report_tb">
+    <tbody><tr><th colspan="10">Time Alert</th>  </tr>
+      <tr class="tb_rw3">
+          <td colspan="2" align="center">5 Minutes left to auto submit your exam.<br>
+            <br>
+        <input name="button" type="button" class="green_button" onclick="javascript:styledPopupClose()" value=" Close ">          </td>
+        </tr>
+      </tbody></table></td>
+    </tr>
+  </tbody></table>
+</div>
+<!-- Timer Alert -->
+<script language="javascript" type="text/javascript">
+
+function ceas() {
+  var serverdate1 = document.getElementById("serdatetime").value;
+  if(serverdate1 == '')
+      serverdate1 = '2020,6,2,11,01,02';
+  var s = serverdate1.split(',');
+
+
+  var d = parseInt(s[2]);
+  var m = parseInt(s[1]);
+  var y = parseInt(s[0]);
+  var h = parseInt(s[3]);       // hour
+  var min = parseInt(s[4]);     // minutes
+  var sec = parseInt(s[5]);     // seconds
+
+  sec++;
+  if (sec>59) {
+    sec = 0;
+    min++;
+  }
+  if (min>59) {
+    min = 0;
+    h++;
+  }
+  if (h>23) {
+    h = 0;
+  }
+  var output = parseInt(y)+","+parseInt(m)+","+parseInt(d)+","+parseInt(h)+","+parseInt(min)+","+parseInt(sec);
+
+  document.getElementById("serdatetime").value = output;
+}
+
+/* Window load functions */
+function callOnLoad() {
+	InitializeTimer(document.getElementById("time_left").value, "sample_form", "sample_scores.php");
+	swap_sheet(0);
+	window.onhelp = function () {
+	   return false;
+	};
+	    Preload("./images/black.gif", "./images/blue.gif", "./images/white.png","./themes/default/images/header_bg.jpg","./themes/default/images/sify_logo.png","./themes/default/images/sample_question_header_bg.jpg","./themes/default/images/A-.png","./themes/default/images/A+.png","./themes/default/images/sample_question_left_sec_body_bg.jpg","./themes/default/images/photo_no.jpg","./themes/default/images/sign.jpg","./themes/default/images/bt-link-bg.jpg","./images/prev_arrow.png","./themes/default/images/prev_btn_bg.jpg","./images/next_arrow.png","./images/final_submit_arow.png","./themes/default/images/final_submit_bg.jpg","./themes/default/images/btn_bg.jpg","./themes/default/images/footer_bg.jpg");
+	getRowCount(0);
+	setElementsCountByClassName();
+	setInterval("ceas()", 1000);
+}
+/*window.onload = function(){
+  setInterval("ceas()", 1000);
+}*/
+</script>
+  </div>
+  <div class="clear"></div>
+  <div id="footer_links">
+    <div id="footer_links_inner">
+      <div id="footer_copyright_txt">Copyright © 2020, All Rights Reserved.</div>
+    </div>
+  </div>
+</form></div>
+
+
+
+</div><div class="nsc-panel nsc-panel-compact nsc-hide">
+    <div class="nsc-panel-move"></div>
+    <div class="nsc-panel-tooltip">
+        <div class="nsc-panel-tooltip-layout" layout="row" layout-align="start center">CTRL+V to toggle the panel</div>
+    </div>
+
+    <div class="nsc-panel-layout" flex="" layout="row" layout-align="start center">
+        <div class="nsc-panel-groups" flex="" layout="row" layout-align="start start">
+
+            <!-- group -->
+            <div class="nsc-panel-group" flex="none" layout="row" layout-align="start start">
+                <div class="nsc-panel-button separated active">
+                    <div class="nsc-panel-select" flex="" layout="row">
+                        <div class="nsc-panel-text nsc-noselect" flex="" layout="row" layout-align="center center">
+                            <span class="nsc-icon nsc-icon-cursor-normal" data-i18n="videoPanelSimpleCursor" data-event="nimbus-editor-active-tools" data-event-param="cursorRing">&nbsp;</span>
+                        </div>
+                        <div class="nsc-panel-trigger">
+                            <span class="nsc-icon nsc-icon-arrow">&nbsp;</span>
+                        </div>
+                    </div>
+                    <div class="nsc-panel-dropdown to-top">
+                        <ul flex="" layout="row" layout-align="start center">
+                            <li class="nsc-panel-dropdown-icon" flex="" layout="row" layout-align="start center">
+                                <span class="nsc-icon nsc-icon-cursor-shade" data-i18n="videoPanelFocusMouse" data-event="nimbus-editor-active-tools" data-event-param="cursorShadow">&nbsp;</span>
+                            </li>
+                            <li class="nsc-panel-dropdown-icon" flex="" layout="row" layout-align="start center">
+                                <span class="nsc-icon nsc-icon-cursor-circle" data-i18n="videoPanelAnimatedCursor" data-event="nimbus-editor-active-tools" data-event-param="cursorRing">&nbsp;</span>
+                            </li>
+                            <!--<li class="nsc-panel-dropdown-icon " flex layout="row" layout-align="start center">-->
+                            <!--<span class="nsc-icon nsc-icon-cursor-tail"></span>-->
+                            <!--</li>-->
+                            <!--<li class="nsc-panel-dropdown-icon " flex layout="row" layout-align="start center">-->
+                            <!--<span class="nsc-icon nsc-icon-cursor-long"></span>-->
+                            <!--</li>-->
+                            <li class="nsc-panel-dropdown-icon" flex="" layout="row" layout-align="start center">
+                                <span class="nsc-icon nsc-icon-cursor-normal" data-i18n="videoPanelSimpleCursor" data-event="nimbus-editor-active-tools" data-event-param="cursorDefault">&nbsp;</span>
+                            </li>
+                            <!--<li class="nsc-panel-dropdown-icon" flex layout="row" layout-align="start center">-->
+                            <!--<span class="nsc-icon nsc-icon-cursor-none" data-event="nimbus-editor-active-tools" data-event-param="cursorNone"></span>-->
+                            <!--</li>-->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- /group -->
+
+            <!-- group -->
+            <div class="nsc-panel-group" flex="none" layout="row" layout-align="start start">
+                <button class="nsc-panel-button" type="button">
+                    <span class="nsc-icon nsc-icon-pen" data-i18n="videoPanelPen" data-event="nimbus-editor-active-tools" data-event-param="pen">&nbsp;</span>
+                </button>
+                <button class="nsc-panel-button" type="button">
+                    <span class="nsc-icon nsc-icon-arrow-line" data-i18n="videoPanelArrow" data-event="nimbus-editor-active-tools" data-event-param="arrow">&nbsp;</span>
+                </button>
+                <button class="nsc-panel-button" type="button">
+                    <span class="nsc-icon nsc-icon-square" data-i18n="videoPanelSquare" data-event="nimbus-editor-active-tools" data-event-param="square">&nbsp;</span>
+                </button>
+                <div class="nsc-panel-button separated">
+                    <div class="nsc-panel-select" flex="" layout="row">
+                        <div class="nsc-panel-text nsc-noselect" flex="" layout="row" layout-align="center center">
+                            <span class="nsc-icon nsc-icon-attention" data-i18n="videoPanelMark" data-event="nimbus-editor-active-tools" data-event-param="notifRed">&nbsp;</span>
+                        </div>
+                        <div class="nsc-panel-trigger">
+                            <span class="nsc-icon nsc-icon-arrow">&nbsp;</span>
+                        </div>
+                    </div>
+                    <div class="nsc-panel-dropdown to-top">
+                        <ul flex="" layout="row" layout-align="start center">
+                            <li class="nsc-panel-dropdown-icon" flex="" layout="row" layout-align="start center">
+                                <span class="nsc-icon nsc-icon-attention" data-i18n="videoPanelMark" data-event="nimbus-editor-active-tools" data-event-param="notifRed">&nbsp;</span>
+                            </li>
+                            <li class="nsc-panel-dropdown-icon" flex="" layout="row" layout-align="start center">
+                                <span class="nsc-icon nsc-icon-question" data-i18n="videoPanelQuestion" data-event="nimbus-editor-active-tools" data-event-param="notifBlue">&nbsp;</span>
+                            </li>
+                            <li class="nsc-panel-dropdown-icon" flex="" layout="row" layout-align="start center">
+                                <span class="nsc-icon nsc-icon-done" data-i18n="videoPanelCheckmark" data-event="nimbus-editor-active-tools" data-event-param="notifGreen">&nbsp;</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="nsc-panel-button assembled">
+                    <div class="nsc-panel-select" flex="" layout="row">
+                        <div class="nsc-panel-text nsc-noselect" flex="" layout="row" layout-align="center center">
+							<span class="nsc-icon nsc-icon-fill-none nsc-panel-icon-fill">
+								<span class="nsc-panel-icon-fill-inner" id="nsc_panel_button_colors" style="background:#00FF00;" data-event="nimbus-editor-active-color" data-event-param="#00FF00">&nbsp;</span>
+							</span>
+                        </div>
+                        <div class="nsc-panel-trigger">
+                            <span class="nsc-icon nsc-icon-arrow">&nbsp;</span>
+                        </div>
+                    </div>
+                    <div class="nsc-panel-dropdown">
+                        <div class="nsc-panel-drop-area">
+                            <div class="nsc-panel-colors">
+
+                                <!-- picked -->
+                                <div class="nsc-colors-picked">
+                                    <div class="nsc-colors-picked-layout" flex="" layout="row" layout-align="start start" layout-wrap="">
+                                        <div class="nsc-colors-picked-item">
+                                            <button class="nsc-colors-picked-button" type="button" data-event="nimbus-editor-active-color" data-event-param="#000000">
+                                                <span class="nsc-colors-picked-button-inner" style="background: #000000;">&nbsp;</span>
+                                            </button>
+                                        </div>
+                                        <div class="nsc-colors-picked-item">
+                                            <button class="nsc-colors-picked-button" type="button" data-event="nimbus-editor-active-color" data-event-param="#0000FF">
+                                                <span class="nsc-colors-picked-button-inner" style="background: #0000FF;">&nbsp;</span>
+                                            </button>
+                                        </div>
+                                        <div class="nsc-colors-picked-item">
+                                            <button class="nsc-colors-picked-button" type="button" data-event="nimbus-editor-active-color" data-event-param="#FF00FF">
+                                                <span class="nsc-colors-picked-button-inner" style="background: #FF00FF;">&nbsp;</span>
+                                            </button>
+                                        </div>
+                                        <div class="nsc-colors-picked-item">
+                                            <button class="nsc-colors-picked-button" type="button" data-event="nimbus-editor-active-color" data-event-param="#00FFFF">
+                                                <span class="nsc-colors-picked-button-inner" style="background: #00FFFF;">&nbsp;</span>
+                                            </button>
+                                        </div>
+                                        <div class="nsc-colors-picked-item">
+                                            <button class="nsc-colors-picked-button" type="button" data-event="nimbus-editor-active-color" data-event-param="#00FF00">
+                                                <span class="nsc-colors-picked-button-inner" style="background: #00FF00;">&nbsp;</span>
+                                            </button>
+                                        </div>
+                                        <div class="nsc-colors-picked-item">
+                                            <button class="nsc-colors-picked-button" type="button" data-event="nimbus-editor-active-color" data-event-param="#FFFF00">
+                                                <span class="nsc-colors-picked-button-inner" style="background: #FFFF00;">&nbsp;</span>
+                                            </button>
+                                        </div>
+                                        <div class="nsc-colors-picked-item">
+                                            <button class="nsc-colors-picked-button" type="button" data-event="nimbus-editor-active-color" data-event-param="#FF0000">
+                                                <span class="nsc-colors-picked-button-inner" style="background: #FF0000;">&nbsp;</span>
+                                            </button>
+                                        </div>
+                                        <div class="nsc-colors-picked-item">
+                                            <button class="nsc-colors-picked-button" type="button" data-event="nimbus-editor-active-color" data-event-param="#FFFFFF">
+                                                <span class="nsc-colors-picked-button-inner" style="background: #FFFFFF;">&nbsp;</span>
+                                            </button>
+                                        </div>
+                                        <!--<div class="nsc-colors-picked-item">-->
+                                        <!--<button class="nsc-colors-picked-button custom" type="button"> -->
+                                        <!--<i class="nsc-icon ic-color-custom"></i> -->
+                                        <!--</button>-->
+                                        <!--</div>-->
+                                    </div>
+                                </div>
+                                <!-- /picked -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /group -->
+
+            <!-- group -->
+            <div class="nsc-panel-group" flex="none" layout="row" layout-align="start start">
+                <button class="nsc-panel-button nsc-hide" type="button">
+                    <span class="nsc-icon nsc-icon-eraser" data-i18n="videoPanelClear" data-event="nimbus-editor-active-tools" data-event-param="clear">&nbsp;</span>
+                </button>
+                <button class="nsc-panel-button" type="button">
+                    <span class="nsc-icon nsc-icon-eraser-all" data-i18n="videoPanelClearAll" data-event="nimbus-editor-active-tools" data-event-param="clearAll">&nbsp;</span>
+                </button>
+                <button class="nsc-panel-button" type="button">
+                    <span class="nsc-icon nsc-icon-webcam" data-i18n="videoPanelCamera" id="nimbus_web_camera_toggle">&nbsp;</span>
+                </button>
+            </div>
+            <!-- /group -->
+        </div>
+
+        <div class="nsc-panel-actions" flex="none" layout="row" layout-align="start center">
+            <button class="nsc-panel-button big" type="button" id="nsc_panel_button_play" style="display: none;">
+                <span class="nsc-icon nsc-icon-play">&nbsp;</span>
+            </button>
+            <button class="nsc-panel-button big" type="button" id="nsc_panel_button_pause">
+                <span class="nsc-icon nsc-icon-pause">&nbsp;</span>
+            </button>
+            <button class="nsc-panel-button big" type="button" id="nsc_panel_button_stop">
+                <span class="nsc-icon nsc-icon-stop">&nbsp;</span>
+            </button>
+        </div>
+
+        <!-- panel togglers -->
+        <div class="nsc-panel-togglers" layout="row" layout-align="start center" flex="none">
+            <button class="nsc-panel-toggle-button" type="button">
+                <span class="nsc-icon nsc-icon-panel-close" data-i18n="videoPanelHideShowPanel">&nbsp;</span>
+            </button>
+        </div>
+        <!-- /panel togglers -->
+
+    </div>
+</div>
+<div class="nsc-video-editor nsc-hide events" style="width: 1519px; height: 754px;"><canvas width="1519" height="754" style="width: 1519px; height: 754px; position: absolute; top: 0px; left: 0px; z-index: 0;"></canvas><canvas width="1519" height="754" style="width: 1519px; height: 754px; position: absolute; top: 0px; left: 0px; z-index: 1;"></canvas><canvas width="1519" height="754" style="width: 1519px; height: 754px; position: absolute; top: 0px; left: 0px; z-index: 2;"></canvas></div><div class="nsc-content-camera nsc-hide" style="top: 0px; left: 0px;">
+    <div class="nsc-content-camera-buttons" flex="none" layout="row" layout-align="start start">
+        <button class="nsc-content-camera-button" type="button" id="nsc_video_camera_collapse" style="display: none">
+            <span class="nsc-icon nsc-icon-panel-collapse"></span>
+        </button>
+        <button class="nsc-content-camera-button" type="button" id="nsc_video_camera_expand">
+            <span class="nsc-icon nsc-icon-panel-expand"></span>
+        </button>
+        <button class="nsc-content-camera-button" type="button" id="nsc_video_camera_close">
+            <span class="nsc-icon nsc-icon-panel-close"></span>
+        </button>
+    </div>
+    <div class="nsc-content-camera-container">
+        <div class="nsc-content-camera-shadow"></div>
+    </div>
+</div>
+<span id="buffer-extension-hover-button" style="display: none; position: absolute; z-index: 8675309; width: 100px; height: 25px; background-image: url(&quot;chrome-extension://noojglkidnpfjbincgijbaiedldjfbhh/data/shared/img/buffer-hover-icon@2x.png&quot;); background-size: 100px 25px; opacity: 0.9; cursor: pointer; top: 601.8px; left: -83px;"></span><div id="pesticide-for-chrome-result"><p>You're hovering on = { node: <b> html</b>; classes: <b> </b>; id: <b> </b>; }</p></div></body></html>
